@@ -12,7 +12,7 @@ APP_SRCS += src/Convolution/pulp_nn_conv_u8_u8_i8.c
 
 APP_SRCS += src/MatrixMultiplication/pulp_nn_matmul_u8_i8.c
 
-CONFIG_OPENMP = 1
+# CONFIG_OPENMP = 1
 
 ifndef cores
 cores=1

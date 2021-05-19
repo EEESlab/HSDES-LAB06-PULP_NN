@@ -59,20 +59,14 @@ void pulp_nn_conv_u8_u8_i8(
 
   uint8_t flag_dim_out_x_odd = dim_out_x & 0x01;
 
-  // int chunk = (dim_out_y >> Log2Core);
-
-  int start_pixel = 0;         // min((chunk * core_id), dim_out_y);
-  int stop_pixel  = dim_out_y; // min(start_pixel + chunk, dim_out_y);
-
   uint8_t *pIm2Col = pIm2ColBase;
-  uint8_t *pOutBuffer = pOut + (start_pixel * ch_out_r * dim_out_x);
+  uint8_t *pOutBuffer = pOut;
 
-  // #pragma omp parallel for schedule(static)
-  for (i_out_y = start_pixel; i_out_y < stop_pixel; i_out_y++)
+  for (i_out_y=0; i_out_y<dim_out_y; i_out_y++)
   {
     
     /* MAIN UNROLLED LOOP */
-    for(i_out_x=0; i_out_x<(dim_out_x); i_out_x++)
+    for(i_out_x=0; i_out_x<dim_out_x; i_out_x++)
     {
 
       /* IM2COL TRANSFORM */
@@ -183,66 +177,7 @@ void pulp_nn_conv_u8_u8_i8(
         pIm2Col = pIm2ColBase;
       }
     }
-    
-    /* LEFTOVER */
-    if(pIm2Col != pIm2ColBase)
-    {
-      printf("Should not enter here in the exercise!!\n");
-      const int8_t *pA = pWeight;
-      int i;
-      int32_t * k1 = pKappa;
-      int32_t * lambda1 = pLambda;
-      for(i = 0; i < ch_out; i++)
-      {
-        int sum = 0;
-        if (pBias != NULL)
-        {
-          sum = ((int) (*pBias++));
-        }
 
-        uint8_t *pB = pIm2ColBase;
-        uint16_t col_cnt_im2col = ch_in * dim_kernel_x * dim_kernel_y >> 2;
-        for(int j=0; j < col_cnt_im2col; j++)
-        {
-          v4s inA = *((v4s*) pA);
-          v4u inB = *((v4u*) pB);
-
-          sum = SumDotp4(inB, inA, sum);
-          pA+=4;
-          pB+=4;
-        }
-        col_cnt_im2col = (ch_in * dim_kernel_y * dim_kernel_x) & 0x3;
-        while (col_cnt_im2col)
-        {
-          int8_t inA1 = *pA++;
-          uint8_t inB1 = *pB++;
-          asm volatile("": : :"memory");
-          sum += inA1 * inB1;
-
-          col_cnt_im2col--;
-        }
-        if (flag_batch_norm && flag_relu)
-        {
-          *pOutBuffer = pulp_nn_bn_quant_u8(sum, *k1, *lambda1, out_shift);
-          k1++;
-          lambda1++;
-          pOutBuffer++;
-        }
-        else
-        {
-          if(flag_relu == 1)
-          {
-            *pOutBuffer = pulp_nn_quant_u8(sum, out_mult, out_shift);
-            pOutBuffer++;
-          }
-          else
-          {
-            *pOutBuffer = (uint8_t) clip8(sum >> out_shift);
-            pOutBuffer++;
-          }
-        }
-      }
-    }
     pIm2Col = pIm2ColBase;
   }
   pi_cl_team_barrier(0);
