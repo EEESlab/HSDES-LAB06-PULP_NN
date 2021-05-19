@@ -91,7 +91,7 @@ uint8_t *pulp_nn_matmul_u8_i8(
       vecB = *((v4u*)pB);
       vecB2 = *((v4u*)pB2);
 
-      sum = SumDotp4(vecB, vecA, sum );
+      sum  = SumDotp4(vecB, vecA, sum );
       sum2 = SumDotp4(vecB, vecA2, sum2);
       sum3 = SumDotp4(vecB, vecA3, sum3);
       sum4 = SumDotp4(vecB, vecA4, sum4);
@@ -112,7 +112,7 @@ uint8_t *pulp_nn_matmul_u8_i8(
     uint16_t col_cnt_im2col = num_col_im2col & 0x3;
     while (col_cnt_im2col)
     {
-      int8_t inA = *pA++;
+      int8_t inA  = *pA++;
       int8_t inA2 = *pA2++;
       int8_t inA3 = *pA3++;
       int8_t inA4 = *pA4++;
